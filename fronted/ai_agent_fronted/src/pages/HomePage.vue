@@ -10,18 +10,18 @@
 // @ts-ignore
 /* eslint-disable */
 import { ref } from 'vue';
-import { userLoginBySession } from '@/api/healthController.ts'
+import { userLoginBySession } from '@/api/userController.ts'
 
 const loginResult = ref<string>('');
 
 const handleLogin = async () => {
   try {
     const result = await userLoginBySession();
-    loginResult.value = result.data || '登录成功';
-    console.log('登录结果:', result);
+    loginResult.value = result.data || '成功';
+    console.log('结果:', result);
   } catch (error) {
-    loginResult.value = '登录失败';
-    console.error('登录错误:', error);
+    loginResult.value = '失败' ;
+    console.error('错误:', error);
   }
 };
 </script>
