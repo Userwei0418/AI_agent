@@ -1,0 +1,79 @@
+# 编译输出文件
+*.class
+*.jar
+*.war
+*.ear
+
+# Maven 和 Gradle 的构建目录
+/build/
+/target/
+
+# 忽略 IntelliJ IDEA 文件
+/.idea/
+/*.iml
+
+# 忽略 VS Code 工作区文件
+.vscode/
+
+# 忽略 Eclipse 的项目文件
+.project
+.classpath
+.settings/
+
+# 忽略 MacOS 系统生成的文件
+.DS_Store
+
+# 忽略 Windows 系统生成的文件
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# 忽略日志文件
+*.log
+
+# 忽略临时文件
+*.tmp
+*.swp
+
+# 忽略 Java 的缓存目录
+*.class
+*.jar
+
+# 忽略环境配置文件
+*.env
+
+# 忽略 Gradle 的缓存文件
+.gradle/
+/build/
+
+# 忽略 Maven 的输出文件
+/target/
+
+# 忽略 IntelliJ IDEA 文件
+.idea/
+*.iws
+*.iml
+
+# 忽略 NetBeans 文件
+/nbproject/private/
+/build/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# 忽略 JRebel 重载缓存
+.rebel/
+
+# 忽略 JetBrains IDE 编译生成文件
+/out/
+
+# 忽略构建脚本生成的二进制文件
+*.exe
+*.dll
+*.so
+*.out
+
+# 忽略其他不需要提交的临时文件
+*.pid
+*.pid.lock
