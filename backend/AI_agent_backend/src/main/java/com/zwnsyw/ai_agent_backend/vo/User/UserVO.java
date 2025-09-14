@@ -1,5 +1,7 @@
 package com.zwnsyw.ai_agent_backend.vo.User;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.zwnsyw.ai_agent_backend.entity.User.User;
 import lombok.Data;
 
@@ -10,6 +12,7 @@ import java.util.Set;
 
 @Data
 public class UserVO implements Serializable {
+    @JsonSerialize(using = ToStringSerializer.class)
     private Long id;  // 用户ID
 
     private String userAccount;  // 账号

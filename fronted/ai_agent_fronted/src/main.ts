@@ -3,12 +3,15 @@ import { createPinia } from 'pinia'
 
 import App from './App.vue'
 import router from './router'
-
 import Antd from 'ant-design-vue'
 import 'ant-design-vue/dist/reset.css'
 
+import './styles.css';
+import permissionDirective from '@/directives/permission.ts'
+
 const app = createApp(App)
 
+app.directive('permission', permissionDirective)
 app.use(createPinia())
 app.use(router)
 app.use(Antd)

@@ -2,13 +2,14 @@ package com.zwnsyw.ai_agent_backend.service.User;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.zwnsyw.ai_agent_backend.dto.User.UserLoginRequest;
 import com.zwnsyw.ai_agent_backend.dto.User.UserQueryRequest;
 import com.zwnsyw.ai_agent_backend.dto.User.UserUpdateRequest;
 import com.zwnsyw.ai_agent_backend.entity.User.User;
 import com.zwnsyw.ai_agent_backend.enums.UserEnums.UserStatusEnum;
 import com.zwnsyw.ai_agent_backend.vo.User.UserVO;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.multipart.MultipartFile;
+
 
 
 public interface UserService extends IService<User> {
@@ -46,7 +47,7 @@ public interface UserService extends IService<User> {
      *
      * @param userAccount  用户账户
      * @param userPassword 用户密码
-     * @param request
+     * @param request      请求
      * @return 脱敏后的用户信息
      */
     UserVO userLoginBySession(String userAccount, String userPassword, HttpServletRequest request);
@@ -121,6 +122,15 @@ public interface UserService extends IService<User> {
     UserVO updateUser(UserUpdateRequest userUpdateRequest);
 
     /**
+     * 上传头像
+     *
+     * @param multipartFile 文件
+     * @param loginUser     登录用户
+     * @return 上传结果
+     */
+    UserVO uploadAvatar(MultipartFile multipartFile, UserVO loginUser);
+
+    /**
      * 更新用户密码。
      *
      * @param oldPassword 用户输入的原密码
@@ -129,5 +139,6 @@ public interface UserService extends IService<User> {
      * @return 更新结果，操作成功返回 true，失败返回 false
      */
     boolean updatePassword(String oldPassword, String newPassword, HttpServletRequest request);
+
 
 }

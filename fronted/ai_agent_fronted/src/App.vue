@@ -1,29 +1,18 @@
-<script setup lang="ts">
-import BasicLayout from '@/layouts/BasicLayout.vue'
-</script>
-
 <template>
-  <BasicLayout />
+  <div id="app">
+    <BasicLayout/>
+  </div>
 </template>
 
-<style>
-/* 全局样式优化 */
-* {
-  box-sizing: border-box;
-}
+<script setup lang="ts">
+import BasicLayout from '@/layouts/BasicLayout.vue'
 
-body {
-  margin: 0;
-  padding: 0;
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell',
-    'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
-}
+</script>
 
-html {
-  overflow-x: hidden;
+<style scoped>
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
 }
 </style>

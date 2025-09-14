@@ -166,3 +166,17 @@ WHERE code IN (
 INSERT INTO role_permission (roleId, permissionId)
 SELECT 3, id
 FROM permission;
+
+-- 消息通知
+CREATE TABLE if not exists message
+(
+    id         BIGINT PRIMARY KEY AUTO_INCREMENT,
+    userId     BIGINT       NOT NULL COMMENT '接收用户ID',
+    title      VARCHAR(255) NOT NULL COMMENT '标题',
+    content    TEXT         NOT NULL COMMENT '内容',
+    type       INT          NOT NULL COMMENT '消息类型（0-审核通知，1-系统通知，2-其他通知）',
+    isRead     TINYINT DEFAULT 0 COMMENT '是否已读（0-未读，1-已读）',
+    createTime DATETIME     NOT NULL COMMENT '创建时间',
+    KEY `idx_user_id` (`userId`, `createTime`, `isRead`) -- 优化按用户ID、时间范围、已读状态查询
+) comment '消息' collate = utf8mb4_unicode_ci;
+

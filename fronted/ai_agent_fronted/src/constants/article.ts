@@ -1,0 +1,17 @@
+export const ARTICLE_REVIEW_STATUS_ENUM = {
+  PENDING: 0,
+  PASS: 1,
+  REJECT: 2,
+};
+
+export const ARTICLE_REVIEW_STATUS_MAP = {
+  [ARTICLE_REVIEW_STATUS_ENUM.PENDING]: "待审核",
+  [ARTICLE_REVIEW_STATUS_ENUM.PASS]: "已通过",
+  [ARTICLE_REVIEW_STATUS_ENUM.REJECT]: "已拒绝",
+};
+
+export const ARTICLE_REVIEW_STATUS_OPTIONS = [
+  { label: "待审核", value: ARTICLE_REVIEW_STATUS_ENUM.PENDING },
+  { label: "已通过", value: ARTICLE_REVIEW_STATUS_ENUM.PASS },
+  { label: "已拒绝", value: ARTICLE_REVIEW_STATUS_ENUM.REJECT },
+];

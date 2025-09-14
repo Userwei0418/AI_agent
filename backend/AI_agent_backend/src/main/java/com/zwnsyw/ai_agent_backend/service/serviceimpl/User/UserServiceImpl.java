@@ -8,20 +8,25 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zwnsyw.ai_agent_backend.common.request.PageRequest;
+import com.zwnsyw.ai_agent_backend.dto.File.UploadPictureResult;
 import com.zwnsyw.ai_agent_backend.dto.User.UserQueryRequest;
 import com.zwnsyw.ai_agent_backend.dto.User.UserUpdateRequest;
+import com.zwnsyw.ai_agent_backend.entity.Message.Message;
 import com.zwnsyw.ai_agent_backend.entity.User.Role;
 import com.zwnsyw.ai_agent_backend.entity.User.User;
-
 import com.zwnsyw.ai_agent_backend.entity.User.UserRole;
+import com.zwnsyw.ai_agent_backend.enums.MessageEnums.MessageTypeEnum;
 import com.zwnsyw.ai_agent_backend.enums.UserEnums.UserGenderEnum;
 import com.zwnsyw.ai_agent_backend.enums.UserEnums.UserStatusEnum;
 import com.zwnsyw.ai_agent_backend.exception.BusinessException;
 import com.zwnsyw.ai_agent_backend.exception.ErrorCode;
 import com.zwnsyw.ai_agent_backend.exception.ThrowUtils;
+import com.zwnsyw.ai_agent_backend.manager.uploadBySteam.FilePictureUploadBySteam;
+import com.zwnsyw.ai_agent_backend.manager.uploadBySteam.PictureUploadBySteamTemplate;
 import com.zwnsyw.ai_agent_backend.mapper.User.RoleMapper;
 import com.zwnsyw.ai_agent_backend.mapper.User.UserMapper;
 import com.zwnsyw.ai_agent_backend.mapper.User.UserRoleMapper;
+import com.zwnsyw.ai_agent_backend.service.Message.MessageService;
 import com.zwnsyw.ai_agent_backend.service.User.PermissionService;
 import com.zwnsyw.ai_agent_backend.service.User.UserService;
 import com.zwnsyw.ai_agent_backend.utils.PasswordUtils;
@@ -29,14 +34,21 @@ import com.zwnsyw.ai_agent_backend.vo.User.UserVO;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.session.FindByIndexNameSessionRepository;
+import org.springframework.session.Session;
+import org.springframework.session.SessionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 
 import java.lang.reflect.Field;
 import java.security.SecureRandom;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.zwnsyw.ai_agent_backend.contant.UserConstant.DEFAULT_ROLE;
@@ -62,6 +74,25 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Resource
     private PermissionService permissionService;
 
+    @Resource
+    private MessageService messageService;
+
+    @Resource
+    private FilePictureUploadBySteam filePictureUploadBySteam;
+
+    @Resource
+    private RedisTemplate<String, Object> redisTemplate;
+
+    @Autowired
+    private SessionRepository<? extends Session> sessionRepository;
+
+    private static final String PASSWORD_RETRY_KEY = "ai_agent:user:password_retry:%s";
+
+    @Value("${user.max-password-retry}")
+    private int maxPwdRetryLimit;
+
+    @Value("${user.max-login-device}")
+    private int maxDeviceLimit;
 
     private String generateRandomSalt() {
         byte[] salt = new byte[16];
@@ -115,6 +146,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             User invitedUser = userMapper.selectByShareCode(inviteCode);
             ThrowUtils.throwIf(invitedUser == null, ErrorCode.PARAMS_ERROR, "邀请码不存在");
             inviteUserId = invitedUser.getId();
+
+            // 通知邀请者：有新用户使用其邀请码注册
+            Message inviteMessage = new Message();
+            inviteMessage.setUserId(inviteUserId);
+            inviteMessage.setTitle("邀请成功");
+            inviteMessage.setContent("用户" + userAccount + "已通过您的邀请码注册成功");
+            inviteMessage.setType(MessageTypeEnum.SYSTEM_MESSAGE.getValue());
+            messageService.addMessage(inviteMessage);
         }
 
         String dynamicSalt = generateRandomSalt();
@@ -133,6 +172,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         assignRole(user.getId(), DEFAULT_ROLE);
 
+        // 发送新用户欢迎消息
+        Message welcomeMessage = new Message();
+        welcomeMessage.setUserId(user.getId());
+        welcomeMessage.setTitle("欢迎加入");
+        welcomeMessage.setContent("感谢注册，祝您在我们的AI智能体平台玩得愉快！");
+        welcomeMessage.setType(MessageTypeEnum.SYSTEM_MESSAGE.getValue());
+        messageService.addMessage(welcomeMessage);
+
         return user.getId();
     }
 
@@ -149,7 +196,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     private String generateRandomUsername() {
-        return "TK_" + RandomUtil.randomString(8);
+        return "AI_" + RandomUtil.randomString(8);
     }
 
     private String generateRandomShareCode() {
@@ -177,22 +224,124 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return UserVO.fromUser(user, inviteUserNumber, roles, permissions);
     }
 
+    //    @Override
+//    public UserVO userLoginBySession(String userAccount, String userPassword, HttpServletRequest request) {
+//
+//        User user = getUserByAccount(userAccount);
+//
+//        // to do done 接入redis 实现密码重试过多锁定
+//        boolean isPasswordValid = passwordUtils.verifyPassword(userPassword, user.getUserPassword(), user.getSalt());
+//        ThrowUtils.throwIf(!isPasswordValid, ErrorCode.PARAMS_ERROR, "密码错误");
+//
+//        UserVO LoginuserVO = convertToLoginUserVO(user);
+//
+//        // to do done 接入redis 用redis维护session 且实现分布式登录 登陆设备数量可控
+//        request.getSession().setAttribute(USER_LOGIN_STATE, LoginuserVO);
+//
+//        return LoginuserVO;
+//    }
     @Override
     public UserVO userLoginBySession(String userAccount, String userPassword, HttpServletRequest request) {
 
         User user = getUserByAccount(userAccount);
 
+        //to do 密码重试过多锁定 (redis) done
+        String retryKey = String.format(PASSWORD_RETRY_KEY, userAccount);
+        Integer retryCount = (Integer) redisTemplate.opsForValue().get(retryKey);
+
+        if (retryCount != null && retryCount >= maxPwdRetryLimit) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_ERROR, "密码输入次数过多，请10分钟后重试");
+        }
+
         boolean isPasswordValid = passwordUtils.verifyPassword(userPassword, user.getUserPassword(), user.getSalt());
-        ThrowUtils.throwIf(!isPasswordValid, ErrorCode.PARAMS_ERROR, "密码错误");
+        if (!isPasswordValid) {
+            // 密码错误时记录次数
+            redisTemplate.opsForValue().set(retryKey, retryCount != null ? retryCount + 1 : 1, 600, TimeUnit.SECONDS);
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码错误");
+        } else {
+            // 登录成功重置计数器
+            redisTemplate.delete(retryKey);
+        }
 
         UserVO LoginuserVO = convertToLoginUserVO(user);
 
+        // 获取用户 IP 和会话 SessionId
+        String userIp = request.getRemoteAddr();
+        String sessionId = request.getSession().getId();
+        // 验证设备数量，并记录登录设备
+        if (!recordUserDevice(user.getId(), sessionId, userIp)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_ERROR, "设备登录数量超限制");
+        }
+
+        //to do 引入redis 控制登入设备数量 done
         request.getSession().setAttribute(USER_LOGIN_STATE, LoginuserVO);
+        log.info("用户登录成功: userId={}, account={}, sessionId={}, ip={}", user.getId(), userAccount, sessionId, userIp);
 
         return LoginuserVO;
     }
 
+    /**
+     * 记录用户设备信息，同时清理旧设备的登录状态
+     */
+    private boolean recordUserDevice(long userId, String sessionId, String userIp) {
+        String redisKey = "login_devices:" + userId;
+        String deviceKey = sessionId + "_" + userIp;
 
+        // 使用 ZSet 存储设备信息，并以时间戳为权重
+        long currentTime = System.currentTimeMillis();
+        redisTemplate.opsForZSet().add(redisKey, deviceKey, currentTime);
+
+        // 检查设备数量是否超出限制
+        Long deviceCountObj = redisTemplate.opsForZSet().size(redisKey);
+        long deviceCount = deviceCountObj != null ? deviceCountObj : 0;
+        if (deviceCount > maxDeviceLimit) {
+            log.warn("超过设备数量限制: userId={}, deviceCount={}, maxDeviceLimit={}", userId, deviceCount, maxDeviceLimit);
+
+            // 获取超出部分的旧设备
+            Set<Object> devicesToRemove = redisTemplate.opsForZSet()
+                    .range(redisKey, 0, deviceCount - maxDeviceLimit - 1);
+
+            if (devicesToRemove != null) {
+                for (Object device : devicesToRemove) {
+                    String[] parts = device.toString().split("_");
+                    if (parts.length > 0) {
+                        String oldestSessionId = parts[0];
+
+                        // 销毁旧设备登录态
+                        invalidateSession(oldestSessionId);
+
+                        Message message = new Message();
+                        message.setUserId(userId);
+                        message.setTitle("下线通知");
+                        message.setContent("您的账户已达到最大设备登录数量限制，已自动下线最早登入设备"); //todo session（vo)中记录ip 登录地点 优化通知
+                        message.setType(MessageTypeEnum.SYSTEM_MESSAGE.getValue());
+                        messageService.addMessage(message);
+
+                    }
+                    // 从 Redis 中移除旧设备
+                    redisTemplate.opsForZSet().remove(redisKey, device);
+                }
+            }
+        }
+
+        // 设置 Redis 键的过期时间
+        redisTemplate.expire(redisKey, 7, TimeUnit.DAYS);
+        return true;
+    }
+
+    /**
+     * 销毁给定会话的 HttpSession
+     */
+    private void invalidateSession(String sessionId) {
+        // 使用分布式 Session 管理销毁会话
+        Session session = sessionRepository.findById(sessionId);
+        if (session != null) {
+            sessionRepository.deleteById(sessionId); // 强制删除 Redis 中的 Session
+            log.info("Session 已销毁: sessionId={}", sessionId);
+        } else {
+            log.warn("未能找到 Session: sessionId={}", sessionId);
+        }
+    }
 
     @Override
     public UserVO getLoginUser(HttpServletRequest request) {
@@ -205,10 +354,31 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
 
+//    @Override
+//    public boolean userLogout(HttpServletRequest request) {
+//        if (getLoginUser(request) != null)
+//            request.getSession().removeAttribute(USER_LOGIN_STATE);
+//        return true;
+//    }
+
     @Override
     public boolean userLogout(HttpServletRequest request) {
-        if (getLoginUser(request) != null)
-            request.getSession().removeAttribute(USER_LOGIN_STATE);
+        // 获取当前用户ID
+        UserVO loginUser = (UserVO) request.getSession().getAttribute(USER_LOGIN_STATE);
+        if (loginUser != null) {
+            String redisKey = "login_devices:" + loginUser.getId();
+            String sessionId = request.getSession().getId();
+            String userIp = request.getRemoteAddr();
+
+            // 移除设备记录
+            String deviceKey = sessionId + "_" + userIp;
+            redisTemplate.opsForZSet().remove(redisKey, deviceKey);
+
+            log.info("用户注销成功: userId={}, sessionId={}, userIp={}", loginUser.getId(), sessionId, userIp);
+        }
+
+        // 销毁 Session
+        request.getSession().invalidate();
         return true;
     }
 
@@ -311,6 +481,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 .set("userPassword", encryptedPassword)
                 .set("salt", dynamicSalt);
 
+        // 发送消息
+        Message welcomeMessage = new Message();
+        welcomeMessage.setUserId(userId);
+        welcomeMessage.setTitle("密码重置");
+        welcomeMessage.setContent("您的密码已经重置为“ai_agent");
+        welcomeMessage.setType(MessageTypeEnum.SYSTEM_MESSAGE.getValue());
+        messageService.addMessage(welcomeMessage);
+
         return update(updateWrapper);
     }
 
@@ -392,6 +570,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
+    public UserVO uploadAvatar(MultipartFile file, UserVO loginUser) {
+
+        String uploadPathPrefix = String.format("AiAgent/Avatar/%s", loginUser.getId());
+
+        UploadPictureResult uploadResult = filePictureUploadBySteam.uploadPicture(file, uploadPathPrefix);
+        String avatarUrl = uploadResult.getUrl();
+
+        UserUpdateRequest updateRequest = new UserUpdateRequest();
+        updateRequest.setId(loginUser.getId());
+        updateRequest.setUserAvatar(avatarUrl);
+
+        return updateUser(updateRequest);
+    }
+
+
+    @Override
     public boolean updatePassword(String oldPassword, String newPassword, HttpServletRequest request) {
 
         UserVO loginUser = getLoginUser(request);
@@ -423,4 +617,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         return true;
     }
+
+
 }

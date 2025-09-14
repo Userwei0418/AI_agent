@@ -12,6 +12,7 @@ import com.zwnsyw.ai_agent_backend.enums.UserEnums.UserStatusEnum;
 import com.zwnsyw.ai_agent_backend.exception.ErrorCode;
 import com.zwnsyw.ai_agent_backend.exception.ThrowUtils;
 import com.zwnsyw.ai_agent_backend.service.User.UserService;
+
 import com.zwnsyw.ai_agent_backend.vo.User.UserVO;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,6 +21,9 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+
 
 import static com.zwnsyw.ai_agent_backend.contant.UserConstant.ADMIN_ROLE;
 import static com.zwnsyw.ai_agent_backend.contant.UserConstant.USER_LOGIN_STATE;
@@ -44,7 +48,7 @@ public class UserController {
         return ResultUtils.success(result);
     }
 
-    @PostMapping("/loginBySession")
+    @PostMapping("/login")
     @Anonymous
     public BaseResponse<UserVO> userLoginBySession(
             @RequestBody @Valid UserLoginRequest userLoginRequest,
@@ -64,9 +68,9 @@ public class UserController {
         // 服务器可以通过该 Cookie 中的 SESSIONID 来识别用户的会话信息，从而保持用户的登录状态
         Cookie sessionCookie = new Cookie("SESSIONID", request.getSession().getId());
         sessionCookie.setHttpOnly(true); // 防止前端 JS 获取，提升安全性
-        sessionCookie.setPath("/");      // 设置全路径，适用于整个域
-        sessionCookie.setMaxAge(7 * 24 * 60 * 60); // 设置过期时间为 7 天
-        // sessionCookie.setSecure(true); // 推荐开启，仅在 HTTPS 环境生效
+        sessionCookie.setPath("/");      // 适用于整个域
+        sessionCookie.setMaxAge(7 * 24 * 60 * 60); // 过期时间 7 天
+        sessionCookie.setSecure(true); // 仅在 HTTPS 环境生效(暂未配置证书 不开启)
         response.addCookie(sessionCookie);
 
         return ResultUtils.success(loginUserVO);
@@ -74,7 +78,7 @@ public class UserController {
 
 
     @GetMapping("/current")
-    @PreAuthorize("system:user:query")
+    @Anonymous
     public BaseResponse<UserVO> CurrentUser(HttpServletRequest request) {
 
         ThrowUtils.throwIf(request == null, ErrorCode.PARAMS_ERROR, "请求不能为空");
@@ -126,7 +130,7 @@ public class UserController {
     @PutMapping("/reset-password/{userId}")
     @PreAuthorizeRole("ADMIN")
     public BaseResponse<Boolean> resetUserPassword(@PathVariable Long userId) {
-        String defaultPassword = "Blog123456";
+        String defaultPassword = "ai_agent";
         boolean result = userService.resetUserPassword(userId, defaultPassword);
         return ResultUtils.success(result);
     }
@@ -145,10 +149,24 @@ public class UserController {
         UserVO updatedUserVO = userService.updateUser(userUpdateRequest);
 
         // 更新成功后，重新设置 session 中的用户信息，确保 session 中保存的是最新的用户数据
-        if (!isAdmin) {
-            request.getSession().setAttribute(USER_LOGIN_STATE, updatedUserVO);
-        }
+        request.getSession().setAttribute(USER_LOGIN_STATE, updatedUserVO);
+
         return ResultUtils.success(updatedUserVO);
+    }
+
+    @PostMapping("/uploadAvatar")
+    @PreAuthorizeRole("USER")
+    public BaseResponse<UserVO> uploadAvatar(
+            @RequestPart("file") MultipartFile multipartFile,
+            HttpServletRequest request) {
+
+        UserVO loginUser = userService.getLoginUser(request);
+
+        UserVO updatedUser = userService.uploadAvatar(multipartFile, loginUser);
+
+        request.getSession().setAttribute(USER_LOGIN_STATE, updatedUser);
+
+        return ResultUtils.success(updatedUser);
     }
 
     @PostMapping("/update-password")

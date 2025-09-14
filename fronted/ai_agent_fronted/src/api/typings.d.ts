@@ -7,6 +7,14 @@ declare namespace API {
     timestamp?: number
   }
 
+  type BaseResponseListMessage = {
+    code?: number
+    data?: Message[]
+    message?: string
+    description?: string
+    timestamp?: number
+  }
+
   type BaseResponseListPermission = {
     code?: number
     data?: Permission[]
@@ -95,6 +103,14 @@ declare namespace API {
     timestamp?: number
   }
 
+  type connectParams = {
+    userId: number
+  }
+
+  type deleteMessageParams = {
+    messageId: number
+  }
+
   type deletePermissionParams = {
     permissionId: number
   }
@@ -115,6 +131,20 @@ declare namespace API {
   type deleteUserRoleParams = {
     userId: number
     roleId: number
+  }
+
+  type markAsReadParams = {
+    messageId: number
+  }
+
+  type Message = {
+    id?: number
+    userId?: number
+    title?: string
+    content?: string
+    type?: number
+    isRead?: number
+    createTime?: string
   }
 
   type OrderItem = {
@@ -158,6 +188,16 @@ declare namespace API {
 
   type searchUsersParams = {
     queryRequest: UserQueryRequest
+  }
+
+  type sendNotificationParams = {
+    userId?: number
+    title: string
+    content: string
+  }
+
+  type SseEmitter = {
+    timeout?: number
   }
 
   type updatePermissionParams = {
