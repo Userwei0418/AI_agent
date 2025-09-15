@@ -189,5 +189,4 @@ public class UserController {
         ThrowUtils.throwIf(userRoleRequest == null, ErrorCode.PARAMS_ERROR, "请求参数不能为空");
         return ResultUtils.success(userService.assignRole(userRoleRequest.getUserId(), userRoleRequest.getRoleName()));
     }
-
 }
