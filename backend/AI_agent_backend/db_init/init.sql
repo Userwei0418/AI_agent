@@ -125,6 +125,13 @@ VALUES ('点赞查询', 'blog:like:query'),
        ('点赞新增', 'blog:like:add'),
        ('点赞取消', 'blog:like:remove');
 
+-- 应用管理相关权限
+INSERT INTO permission (name, code)
+VALUES ('应用查询', 'system:app:query'),
+       ('应用新增', 'system:app:add'),
+       ('应用修改', 'system:app:edit'),
+       ('应用删除', 'system:app:remove');
+
 -- USER角色
 -- 分配用户查询、修改
 INSERT INTO role_permission (roleId, permissionId)
@@ -132,7 +139,11 @@ SELECT 1, id
 FROM permission
 WHERE code IN (
                'system:user:query',
-               'system:user:edit'
+               'system:user:edit',
+               'system:app:query',
+               'system:app:add',
+               'system:app:edit',
+               'system:app:remove'
     );
 -- 分配文章查询权限
 INSERT INTO role_permission (roleId, permissionId)
@@ -158,8 +169,13 @@ WHERE code IN (
                'blog:comment:query',
                'blog:comment:add',
                'blog:like:query',
-               'blog:like:add'
+               'blog:like:add',
+               'system:app:query',
+               'system:app:add',
+               'system:app:edit',
+               'system:app:remove'
     );
+
 
 -- ADMIN角色
 -- 分配所有权限
@@ -167,6 +183,8 @@ INSERT INTO role_permission (roleId, permissionId)
 SELECT 3, id
 FROM permission;
 
+
+-- -------------------- 通知模块 --------------------
 -- 消息通知
 CREATE TABLE if not exists message
 (
@@ -180,3 +198,26 @@ CREATE TABLE if not exists message
     KEY `idx_user_id` (`userId`, `createTime`, `isRead`) -- 优化按用户ID、时间范围、已读状态查询
 ) comment '消息' collate = utf8mb4_unicode_ci;
 
+
+
+-- -------------------- 业务模块 --------------------
+-- 应用表
+create table app
+(
+    id           bigint auto_increment comment 'id' primary key,
+    appName      varchar(256)                       null comment '应用名称',
+    cover        varchar(512)                       null comment '应用封面',
+    initPrompt   text                               null comment '应用初始化的 prompt',
+    codeGenType  varchar(64)                        null comment '代码生成类型（枚举）',
+    deployKey    varchar(64)                        null comment '部署标识',
+    deployedTime datetime                           null comment '部署时间',
+    priority     int      default 0                 not null comment '优先级',
+    userId       bigint                             not null comment '创建用户id',
+    editTime     datetime default CURRENT_TIMESTAMP not null comment '编辑时间',
+    createTime   datetime default CURRENT_TIMESTAMP not null comment '创建时间',
+    updateTime   datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
+    isDelete     tinyint  default 0                 not null comment '是否删除',
+    UNIQUE KEY uk_deployKey (deployKey), -- 确保部署标识唯一
+    INDEX idx_appName (appName),         -- 提升基于应用名称的查询性能
+    INDEX idx_userId (userId)            -- 提升基于用户 ID 的查询性能
+) comment '应用' collate = utf8mb4_unicode_ci;

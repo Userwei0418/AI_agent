@@ -6,7 +6,7 @@ import cn.hutool.core.util.NumberUtil;
 import com.qcloud.cos.model.UploadResult;
 import com.qcloud.cos.model.ciModel.persistence.ImageInfo;
 import com.zwnsyw.ai_agent_backend.config.CosClientConfig;
-import com.zwnsyw.ai_agent_backend.dto.File.UploadPictureResult;
+import com.zwnsyw.ai_agent_backend.vo.File.UploadPictureResult;
 import com.zwnsyw.ai_agent_backend.exception.BusinessException;
 import com.zwnsyw.ai_agent_backend.exception.ErrorCode;
 import com.zwnsyw.ai_agent_backend.manager.CosManager;

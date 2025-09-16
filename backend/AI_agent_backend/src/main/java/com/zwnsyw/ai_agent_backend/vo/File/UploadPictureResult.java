@@ -1,4 +1,4 @@
-package com.zwnsyw.ai_agent_backend.dto.File;
+package com.zwnsyw.ai_agent_backend.vo.File;
 
 
 import lombok.Data;

@@ -6,7 +6,7 @@ import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpStatus;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.http.Method;
-import com.zwnsyw.ai_agent_backend.dto.File.UploadPictureResult;
+import com.zwnsyw.ai_agent_backend.vo.File.UploadPictureResult;
 import com.zwnsyw.ai_agent_backend.exception.BusinessException;
 import com.zwnsyw.ai_agent_backend.exception.ErrorCode;
 import com.zwnsyw.ai_agent_backend.exception.ThrowUtils;
