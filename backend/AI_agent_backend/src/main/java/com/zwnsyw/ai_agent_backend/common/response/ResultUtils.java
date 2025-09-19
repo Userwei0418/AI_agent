@@ -1,6 +1,5 @@
 package com.zwnsyw.ai_agent_backend.common.response;
 
-
 import com.zwnsyw.ai_agent_backend.exception.ErrorCode;
 
 public class ResultUtils {
@@ -13,6 +12,11 @@ public class ResultUtils {
      * @return 返回成功响应对象
      */
     public static <T> BaseResponse<T> success(T data) {
+        // 如果数据是 Long 类型，则转换为 String 类型
+        if (data instanceof Long) {
+            data = (T) String.valueOf(data);
+        }
+
         return new BaseResponse<T>()
                 .code(ErrorCode.SUCCESS.getCode())
                 .data(data)

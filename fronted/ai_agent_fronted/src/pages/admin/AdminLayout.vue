@@ -3,13 +3,12 @@
     <div class="sidebar">
       <ul>
         <li :class="{ active: isActive('user') }" @click="activeTab = 'user'">
-          <user-outlined />
           <span>用户管理</span>
         </li>
-<!--        <li :class="{ active: isActive('picture') }" @click="activeTab = 'picture'">-->
-<!--          <picture-outlined />-->
-<!--          <span>服饰管理</span>-->
-<!--        </li>-->
+        <li :class="{ active: isActive('app') }" @click="activeTab = 'app'">
+
+          <span>App管理</span>
+        </li>
 <!--        <li :class="{ active: isActive('article') }" @click="activeTab = 'article'">-->
 <!--          <file-text-outlined />-->
 <!--          <span>文章管理</span>-->
@@ -30,7 +29,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import UserManagePage from './UserManagePage.vue'
-// import ArticleManagePage from './ArticleManagePage.vue'
+import AppManagePage from './AppManagePage.vue'
 // import PictureManagePage from './PictureManagePage.vue'
 // import Analytics from "./Analytics.vue";
 
@@ -42,8 +41,8 @@ const currentComponent = computed(() => {
   switch (activeTab.value) {
     case 'user':
       return UserManagePage
-    // case 'article':
-    //   return ArticleManagePage
+    case 'app':
+      return AppManagePage
     // case 'picture':
     //   return PictureManagePage
     // case 'analytics':

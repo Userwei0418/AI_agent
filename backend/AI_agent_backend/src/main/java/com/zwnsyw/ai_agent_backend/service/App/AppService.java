@@ -7,8 +7,11 @@ import com.zwnsyw.ai_agent_backend.dto.App.AppCreateRequest;
 import com.zwnsyw.ai_agent_backend.dto.App.AppQueryRequest;
 import com.zwnsyw.ai_agent_backend.dto.App.AppUpdateRequest;
 import com.zwnsyw.ai_agent_backend.entity.App.App;
+import com.zwnsyw.ai_agent_backend.entity.User.User;
 import com.zwnsyw.ai_agent_backend.vo.App.AppVO;
+import com.zwnsyw.ai_agent_backend.vo.User.UserVO;
 import jakarta.servlet.http.HttpServletRequest;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 
@@ -104,5 +107,25 @@ public interface AppService extends IService<App> {
      * @return 应用VO列表
      */
     List<AppVO> getAppVOList(List<App> appList);
+
+    /**
+     * 聊天生成代码
+     *
+     * @param appId 应用ID
+     * @param message 聊天内容
+     * @param loginUser 登录用户
+     * @return 生成的代码
+     */
+    Flux<String> chatToGenCode(Long appId, String message, UserVO loginUser);
+
+
+    /**
+     * 部署应用
+     *
+     * @param appId 应用ID
+     * @param loginUser 登录用户
+     * @return 部署结果
+     */
+    String deployApp(Long appId, UserVO loginUser);
 
 }

@@ -9,6 +9,7 @@ import type { RouteRecordRaw } from 'vue-router'
 import { useLoginUserStore } from '@/stores/useLoginUserStore'
 import ACCESS_ENUM from '@/access/accessEnum'
 import checkAccess from '@/access/checkAccess'
+import AppChatPage from '@/pages/app/AppChatPage.vue'
 
 
 const routes: Array<RouteRecordRaw> = [
@@ -44,6 +45,11 @@ const routes: Array<RouteRecordRaw> = [
     name: '用户管理',
     component: UserManagePage,
     meta: { access: ACCESS_ENUM.ADMIN, requiresAuth: true }
+  },
+  {
+    path: '/app/chat/:id',
+    name: '应用对话',
+    component: AppChatPage,
   },
   {
     path: '/403',

@@ -1,5 +1,7 @@
 package com.zwnsyw.ai_agent_backend.controller.App;
 
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.zwnsyw.ai_agent_backend.RBAC.annotation.Anonymous;
@@ -9,6 +11,7 @@ import com.zwnsyw.ai_agent_backend.common.request.DeleteRequest;
 import com.zwnsyw.ai_agent_backend.common.response.BaseResponse;
 import com.zwnsyw.ai_agent_backend.common.response.ResultUtils;
 import com.zwnsyw.ai_agent_backend.dto.App.AppCreateRequest;
+import com.zwnsyw.ai_agent_backend.dto.App.AppDeployRequest;
 import com.zwnsyw.ai_agent_backend.dto.App.AppQueryRequest;
 import com.zwnsyw.ai_agent_backend.dto.App.AppUpdateRequest;
 import com.zwnsyw.ai_agent_backend.entity.App.App;
@@ -22,10 +25,15 @@ import com.zwnsyw.ai_agent_backend.vo.User.UserVO;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/app")
@@ -117,6 +125,7 @@ public class AppController {
     @GetMapping("/featured/list")
     @Anonymous
     public BaseResponse<Page<AppVO>> getFeaturedApps(AppQueryRequest queryRequest) {
+
         ThrowUtils.throwIf(queryRequest == null, ErrorCode.PARAMS_ERROR, "请求参数不能为空");
 
         Page<AppVO> appVOPage = appService.getFeaturedApps(queryRequest);
@@ -162,4 +171,79 @@ public class AppController {
 
         return ResultUtils.success(appVOPage);
     }
+
+
+    /**
+     * 应用聊天生成代码（流式 SSE）
+     *
+     * @param appId   应用 ID
+     * @param message 用户消息
+     * @param request 请求对象
+     * @return 生成结果流
+     *
+     * test 使用gitBash
+     * curl -X POST "http://localhost:8611/api/user/login" \
+     *         -H "Content-Type: application/json" \
+     *         -d '{
+     *         "userAccount": "admin",
+     *         "userPassword": "12345678"
+     *         }' \
+     *   -c cookies.txt
+     *
+     *   curl -G "http://localhost:8611/api/app/chat/gen/code" \
+     *   --data-urlencode "appId=1967903014458531841" \
+     *   --data-urlencode "message=我需要一个简单的个人中心网站" \
+     *   -H "Accept: text/event-stream" \
+     *   -H "Cache-Control: no-cache" \
+     *   -b cookies.txt \
+     *   --no-buffer
+     */
+    @GetMapping(value = "/chat/gen/code", produces = MediaType.TEXT_EVENT_STREAM_VALUE + ";charset=UTF-8")    public Flux<ServerSentEvent<String>> chatToGenCode(@RequestParam Long appId,
+                                                       @RequestParam String message,
+                                                       HttpServletRequest request) {
+        // 参数校验
+        ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用ID无效");
+        ThrowUtils.throwIf(StrUtil.isBlank(message), ErrorCode.PARAMS_ERROR, "用户消息不能为空");
+        // 获取当前登录用户
+        UserVO loginUser = userService.getLoginUser(request);
+        // 调用服务生成代码（流式）
+        Flux<String> contentFlux = appService.chatToGenCode(appId, message, loginUser);
+        // 转换为 ServerSentEvent 格式
+        return contentFlux
+                .map(chunk -> {
+                    // 将内容包装成JSON对象
+                    Map<String, String> wrapper = Map.of("d", chunk);
+                    String jsonData = JSONUtil.toJsonStr(wrapper);
+                    return ServerSentEvent.<String>builder()
+                            .data(jsonData)
+                            .build();
+                })
+                .concatWith(Mono.just(
+                        // 发送结束事件
+                        ServerSentEvent.<String>builder()
+                                .event("done")
+                                .data("")
+                                .build()
+                ));
+    }
+
+
+    /**
+     * 应用部署
+     *
+     * @param appDeployRequest 部署请求
+     * @param request          请求
+     * @return 部署 URL
+     */
+    @PostMapping("/deploy")
+    public BaseResponse<String> deployApp(@RequestBody @Valid AppDeployRequest appDeployRequest, HttpServletRequest request) {
+
+        ThrowUtils.throwIf(appDeployRequest == null, ErrorCode.PARAMS_ERROR, "请求参数不能为空");
+        UserVO loginUser = userService.getLoginUser(request);
+        String deployUrl = appService.deployApp(appDeployRequest.getAppId(), loginUser);
+        return ResultUtils.success(deployUrl);
+    }
+
+
+
 }

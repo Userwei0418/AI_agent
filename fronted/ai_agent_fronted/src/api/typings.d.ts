@@ -1,4 +1,55 @@
 declare namespace API {
+  type AppCreateRequest = {
+    initPrompt: string
+    codeGenType?: string
+  }
+
+  type AppDeployRequest = {
+    appId: number
+  }
+
+  type AppQueryRequest = {
+    page?: number
+    pageSize?: number
+    sortField?: string
+    sortOrder?: string
+    id?: number
+    appName?: string
+    codeGenType?: string
+    userId?: number
+    keyword?: string
+  }
+
+  type AppUpdateRequest = {
+    id: number
+    appName?: string
+    cover?: string
+    priority?: number
+  }
+
+  type AppVO = {
+    id?: number
+    appName?: string
+    cover?: string
+    initPrompt?: string
+    codeGenType?: string
+    deployKey?: string
+    deployedTime?: string
+    priority?: number
+    userId?: number
+    createTime?: string
+    updateTime?: string
+    user?: UserVO
+  }
+
+  type BaseResponseAppVO = {
+    code?: number
+    data?: AppVO
+    message?: string
+    description?: string
+    timestamp?: number
+  }
+
   type BaseResponseBoolean = {
     code?: number
     data?: boolean
@@ -55,6 +106,14 @@ declare namespace API {
     timestamp?: number
   }
 
+  type BaseResponsePageAppVO = {
+    code?: number
+    data?: PageAppVO
+    message?: string
+    description?: string
+    timestamp?: number
+  }
+
   type BaseResponsePageUserVO = {
     code?: number
     data?: PageUserVO
@@ -87,6 +146,14 @@ declare namespace API {
     timestamp?: number
   }
 
+  type BaseResponseString = {
+    code?: number
+    data?: string
+    message?: string
+    description?: string
+    timestamp?: number
+  }
+
   type BaseResponseUserRole = {
     code?: number
     data?: UserRole
@@ -103,6 +170,11 @@ declare namespace API {
     timestamp?: number
   }
 
+  type chatToGenCodeParams = {
+    appId: number
+    message: string
+  }
+
   type connectParams = {
     userId: number
   }
@@ -113,6 +185,10 @@ declare namespace API {
 
   type deletePermissionParams = {
     permissionId: number
+  }
+
+  type DeleteRequest = {
+    id: number
   }
 
   type deleteRoleParams = {
@@ -133,6 +209,22 @@ declare namespace API {
     roleId: number
   }
 
+  type getAllAppsParams = {
+    queryRequest: AppQueryRequest
+  }
+
+  type getAppByIdParams = {
+    appId: number
+  }
+
+  type getFeaturedAppsParams = {
+    queryRequest: AppQueryRequest
+  }
+
+  type getMyAppsParams = {
+    queryRequest: AppQueryRequest
+  }
+
   type markAsReadParams = {
     messageId: number
   }
@@ -150,6 +242,20 @@ declare namespace API {
   type OrderItem = {
     column?: string
     asc?: boolean
+  }
+
+  type PageAppVO = {
+    records?: AppVO[]
+    total?: number
+    size?: number
+    current?: number
+    orders?: OrderItem[]
+    optimizeCountSql?: PageAppVO
+    searchCount?: PageAppVO
+    optimizeJoinOfCountSql?: boolean
+    maxLimit?: number
+    countId?: string
+    pages?: number
   }
 
   type PageUserVO = {
@@ -194,6 +300,12 @@ declare namespace API {
     userId?: number
     title: string
     content: string
+  }
+
+  type ServerSentEventString = true
+
+  type serveStaticResourceParams = {
+    deployKey: string
   }
 
   type SseEmitter = {

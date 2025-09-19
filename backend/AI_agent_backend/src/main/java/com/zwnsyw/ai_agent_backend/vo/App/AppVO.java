@@ -1,5 +1,7 @@
 package com.zwnsyw.ai_agent_backend.vo.App;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.zwnsyw.ai_agent_backend.vo.User.UserVO;
 import lombok.Data;
 
@@ -12,6 +14,7 @@ public class AppVO implements Serializable {
     /**
      * id
      */
+    @JsonSerialize(using = ToStringSerializer.class)
     private Long id;
 
     /**

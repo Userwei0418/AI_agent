@@ -131,7 +131,6 @@ const scriptContent = `(function() {
 
 // 在组件挂载时执行脚本
 import { onMounted } from 'vue'
-import HeaderDemo from '@/components/HeaderDemo.vue'
 onMounted(() => {
   eval(scriptContent)
 })
