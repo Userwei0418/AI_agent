@@ -90,42 +90,6 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
     }
 
 
-    @Override
-    public int loadChatHistoryToMemory(Long appId, MessageWindowChatMemory chatMemory, int maxCount) {
-        try {
-            QueryWrapper<ChatHistory> queryWrapper = new QueryWrapper<>();
-            queryWrapper.lambda()
-                    .eq(ChatHistory::getAppId, appId)
-                    .orderByDesc(ChatHistory::getCreateTime)
-                    .last("LIMIT " + maxCount);
-
-            List<ChatHistory> historyList = this.list(queryWrapper);
-            if (CollUtil.isEmpty(historyList)) {
-                return 0;
-            }
-            // 反转列表，确保按照时间正序（老的在前，新的在后）
-            historyList = historyList.reversed();
-            // 按照时间顺序将消息添加到记忆中
-            int loadedCount = 0;
-            // 先清理历史缓存，防止重复加载
-            chatMemory.clear();
-            for (ChatHistory history : historyList) {
-                if (ChatHistoryMessageTypeEnum.USER.getValue().equals(history.getMessageType())) {
-                    chatMemory.add(UserMessage.from(history.getMessage()));
-                } else if (ChatHistoryMessageTypeEnum.AI.getValue().equals(history.getMessageType())) {
-                    chatMemory.add(AiMessage.from(history.getMessage()));
-                }
-                loadedCount++;
-            }
-            log.info("成功为 appId: {} 加载 {} 条历史消息", appId, loadedCount);
-            return loadedCount;
-        } catch (Exception e) {
-            log.error("加载历史对话失败，appId: {}, error: {}", appId, e.getMessage(), e);
-            // 加载失败不影响系统运行，只是没有历史上下文
-            return 0;
-        }
-    }
-
     /**
      * 获取查询包装类
      *
@@ -175,5 +139,40 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
     }
 
 
+    @Override
+    public int loadChatHistoryToMemory(Long appId, MessageWindowChatMemory chatMemory, int maxCount) {
+        try {
+            QueryWrapper<ChatHistory> queryWrapper = new QueryWrapper<>();
+            queryWrapper.lambda()
+                    .eq(ChatHistory::getAppId, appId)
+                    .orderByDesc(ChatHistory::getCreateTime)
+                    .last("LIMIT " + maxCount);
+
+            List<ChatHistory> historyList = this.list(queryWrapper);
+            if (CollUtil.isEmpty(historyList)) {
+                return 0;
+            }
+            // 反转列表，确保按照时间正序（老的在前，新的在后）
+            historyList = historyList.reversed();
+            // 按照时间顺序将消息添加到记忆中
+            int loadedCount = 0;
+            // 先清理历史缓存，防止重复加载
+            chatMemory.clear();
+            for (ChatHistory history : historyList) {
+                if (ChatHistoryMessageTypeEnum.USER.getValue().equals(history.getMessageType())) {
+                    chatMemory.add(UserMessage.from(history.getMessage()));
+                } else if (ChatHistoryMessageTypeEnum.AI.getValue().equals(history.getMessageType())) {
+                    chatMemory.add(AiMessage.from(history.getMessage()));
+                }
+                loadedCount++;
+            }
+            log.info("成功为 appId: {} 加载 {} 条历史消息", appId, loadedCount);
+            return loadedCount;
+        } catch (Exception e) {
+            log.error("加载历史对话失败，appId: {}, error: {}", appId, e.getMessage(), e);
+            // 加载失败不影响系统运行，只是没有历史上下文
+            return 0;
+        }
+    }
 
 }

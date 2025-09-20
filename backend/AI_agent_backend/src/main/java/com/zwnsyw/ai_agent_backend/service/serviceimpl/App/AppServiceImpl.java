@@ -46,6 +46,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
     private UserService userService;
 
     @Resource
+    @Lazy
     private AiCodeGeneratorFacade aiCodeGeneratorFacade;
 
     @Resource

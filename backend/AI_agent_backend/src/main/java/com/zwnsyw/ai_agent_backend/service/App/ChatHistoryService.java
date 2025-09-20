@@ -48,6 +48,15 @@ public interface ChatHistoryService extends IService<ChatHistory> {
                                                UserVO loginUser);
 
     /**
+     * 构造查询条件
+     *
+     * @param chatHistoryQueryRequest
+     * @return
+     */
+    QueryWrapper<ChatHistory> getQueryWrapper(ChatHistoryQueryRequest chatHistoryQueryRequest);
+
+
+    /**
      * 加载对话历史到内存
      *
      * @param appId
@@ -56,13 +65,5 @@ public interface ChatHistoryService extends IService<ChatHistory> {
      * @return 加载成功的条数
      */
     int loadChatHistoryToMemory(Long appId, MessageWindowChatMemory chatMemory, int maxCount);
-
-    /**
-     * 构造查询条件
-     *
-     * @param chatHistoryQueryRequest
-     * @return
-     */
-    QueryWrapper<ChatHistory> getQueryWrapper(ChatHistoryQueryRequest chatHistoryQueryRequest);
 
 }
