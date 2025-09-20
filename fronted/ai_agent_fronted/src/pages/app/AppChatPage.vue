@@ -44,9 +44,9 @@
         <div class="messages-container" ref="messagesContainer">
           <!-- 加载更多按钮 -->
           <div v-if="hasMoreHistory" class="load-more-container">
-<!--            <a-button type="link" @click="loadMoreHistory" :loading="loadingHistory" size="small">-->
-<!--              加载更多历史消息-->
-<!--            </a-button>-->
+            <a-button type="link" @click="loadMoreHistory" :loading="loadingHistory" size="small">
+              加载更多历史消息
+            </a-button>
           </div>
           <div v-for="(message, index) in messages" :key="index" class="message-item">
             <div v-if="message.type === 'user'" class="user-message">
@@ -219,7 +219,7 @@ import {
   deployApp as deployAppApi,
   deleteMyApp as deleteAppApi,
 } from '@/api/appController'
-// import { listAppChatHistory } from '@/api/chatHistoryController'
+import { listAppChatHistory } from '@/api/chatHistoryController'
 import { CodeGenTypeEnum, formatCodeGenType } from '@/utils/codeGenTypes'
 import request from '@/request'
 
@@ -238,6 +238,7 @@ import {
   DownloadOutlined,
   EditOutlined,
 } from '@ant-design/icons-vue'
+import { formatTime } from '@/utils/time.ts'
 
 const route = useRoute()
 const router = useRouter()
@@ -310,82 +311,63 @@ const showAppDetail = () => {
   appDetailVisible.value = true
 }
 
-const parseDateTimeArray = (dateArray: number[] | undefined): Date | null => {
-  if (!dateArray || dateArray.length < 6) {
-    return null
-  }
-  // 注意：JavaScript 中月份是从0开始的，所以需要减1
-  return new Date(
-    dateArray[0],     // 年
-    dateArray[1] - 1, // 月（需要减1）
-    dateArray[2],     // 日
-    dateArray[3],     // 时
-    dateArray[4],     // 分
-    dateArray[5]      // 秒
-  )
-}
-
-// 格式化时间显示的函数
-const formatDateTime = (date: Date | null): string => {
-  if (!date || isNaN(date.getTime())) {
-    return '未知时间'
-  }
-  return date.toLocaleString('zh-CN')
-}
-
 // 加载对话历史
-// const loadChatHistory = async (isLoadMore = false) => {
-//   if (!appId.value || loadingHistory.value) return
-//   loadingHistory.value = true
-//   try {
-//     const params: API.listAppChatHistoryParams = {
-//       appId: appId.value,
-//       pageSize: 10,
-//     }
-//     // 如果是加载更多，传递最后一条消息的创建时间作为游标
-//     if (isLoadMore && lastCreateTime.value) {
-//       params.lastCreateTime = lastCreateTime.value
-//     }
-//     const res = await listAppChatHistory(params)
-//     if (res.data.code === 0 && res.data.data) {
-//       const chatHistories = res.data.data.records || []
-//       if (chatHistories.length > 0) {
-//         // 将对话历史转换为消息格式，并按时间正序排列（老消息在前）
-//         const historyMessages: Message[] = chatHistories
-//             .map((chat) => ({
-//               type: (chat.messageType === 'user' ? 'user' : 'ai') as 'user' | 'ai',
-//               content: chat.message || '',
-//               createTime: chat.createTime,
-//             }))
-//             .reverse() // 反转数组，让老消息在前
-//         if (isLoadMore) {
-//           // 加载更多时，将历史消息添加到开头
-//           messages.value.unshift(...historyMessages)
-//         } else {
-//           // 初始加载，直接设置消息列表
-//           messages.value = historyMessages
-//         }
-//         // 更新游标
-//         lastCreateTime.value = chatHistories[chatHistories.length - 1]?.createTime
-//         // 检查是否还有更多历史
-//         hasMoreHistory.value = chatHistories.length === 10
-//       } else {
-//         hasMoreHistory.value = false
-//       }
-//       historyLoaded.value = true
-//     }
-//   } catch (error) {
-//     console.error('加载对话历史失败：', error)
-//     message.error('加载对话历史失败')
-//   } finally {
-//     loadingHistory.value = false
-//   }
-// }
+const loadChatHistory = async (isLoadMore = false) => {
+  if (!appId.value || loadingHistory.value) return
+  loadingHistory.value = true
+  try {
+    const params: API.listAppChatHistoryParams = {
+      appId: appId.value,
+      pageSize: 10,
+    }
 
-// // 加载更多历史消息
-// const loadMoreHistory = async () => {
-//   await loadChatHistory(true)
-// }
+    // 如果是加载更多，传递最后一条消息的创建时间作为游标
+    if (isLoadMore && lastCreateTime.value) {
+      params.lastCreateTime = formatTime(lastCreateTime.value)
+      // console.log('Using lastCreateTime', lastCreateTime)
+    }
+
+
+    const res = await listAppChatHistory(params)
+    if (res.data.code === 0 && res.data.data) {
+      const chatHistories = res.data.data.records || []
+      if (chatHistories.length > 0) {
+        // 将对话历史转换为消息格式，并按时间正序排列（老消息在前）
+        const historyMessages: Message[] = chatHistories
+          .map((chat) => ({
+            type: (chat.messageType === 'user' ? 'user' : 'ai') as 'user' | 'ai',
+            content: chat.message || '',
+            createTime: chat.createTime,
+          }))
+          .reverse() // 反转数组，让老消息在前
+        if (isLoadMore) {
+          // 加载更多时，将历史消息添加到开头
+          messages.value.unshift(...historyMessages)
+        } else {
+          // 初始加载，直接设置消息列表
+          messages.value = historyMessages
+        }
+        // 更新游标
+        lastCreateTime.value = chatHistories[chatHistories.length - 1]?.createTime
+        // 检查是否还有更多历史
+        hasMoreHistory.value = chatHistories.length === 10
+      } else {
+        hasMoreHistory.value = false
+      }
+      historyLoaded.value = true
+    }
+  } catch (error) {
+    console.error('加载对话历史失败：', error)
+    message.error('加载对话历史失败')
+  } finally {
+    loadingHistory.value = false
+  }
+}
+
+// 加载更多历史消息
+const loadMoreHistory = async () => {
+  await loadChatHistory(true)
+}
 
 // 获取应用信息
 const fetchAppInfo = async () => {
@@ -402,21 +384,10 @@ const fetchAppInfo = async () => {
     const res = await getAppById({ appId: id })
     if (res.data.code === 0 && res.data.data) {
 
-      const appData = res.data.data
-      if (appData.createTime && Array.isArray(appData.createTime)) {
-        appData.createTime = parseDateTimeArray(appData.createTime)
-      }
-      if (appData.deployedTime && Array.isArray(appData.deployedTime)) {
-        appData.deployedTime = parseDateTimeArray(appData.deployedTime)
-      }
-      if (appData.updateTime && Array.isArray(appData.updateTime)) {
-        appData.updateTime = parseDateTimeArray(appData.updateTime)
-      }
-
       appInfo.value = res.data.data
 
       // 先加载对话历史
-      // await loadChatHistory()
+      await loadChatHistory()
       // 如果有至少2条对话记录，展示对应的网站
       if (messages.value.length >= 2) {
         updatePreview()

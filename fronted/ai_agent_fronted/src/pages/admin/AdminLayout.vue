@@ -9,10 +9,9 @@
 
           <span>App管理</span>
         </li>
-<!--        <li :class="{ active: isActive('article') }" @click="activeTab = 'article'">-->
-<!--          <file-text-outlined />-->
-<!--          <span>文章管理</span>-->
-<!--        </li>-->
+        <li :class="{ active: isActive('chat') }" @click="activeTab = 'chat'">
+          <span>对话管理</span>
+        </li>
 <!--        <li :class="{ active: isActive('analytics') }" @click="activeTab = 'analytics'">-->
 <!--          <area-chart-outlined />-->
 <!--          <span>数据分析</span>-->
@@ -30,7 +29,7 @@
 import { ref, computed } from 'vue'
 import UserManagePage from './UserManagePage.vue'
 import AppManagePage from './AppManagePage.vue'
-// import PictureManagePage from './PictureManagePage.vue'
+import ChatManagePage from './ChatManagePage.vue'
 // import Analytics from "./Analytics.vue";
 
 const isActive = (tabName: string) => activeTab.value === tabName
@@ -43,8 +42,8 @@ const currentComponent = computed(() => {
       return UserManagePage
     case 'app':
       return AppManagePage
-    // case 'picture':
-    //   return PictureManagePage
+    case 'chat':
+      return ChatManagePage
     // case 'analytics':
     //   return Analytics
     default:

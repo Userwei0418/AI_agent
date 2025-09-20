@@ -198,7 +198,9 @@ public class AppController {
      *   -b cookies.txt \
      *   --no-buffer
      */
-    @GetMapping(value = "/chat/gen/code", produces = MediaType.TEXT_EVENT_STREAM_VALUE + ";charset=UTF-8")    public Flux<ServerSentEvent<String>> chatToGenCode(@RequestParam Long appId,
+    @GetMapping(value = "/chat/gen/code", produces = MediaType.TEXT_EVENT_STREAM_VALUE + ";charset=UTF-8")
+    @Anonymous
+    public Flux<ServerSentEvent<String>> chatToGenCode(@RequestParam Long appId,
                                                        @RequestParam String message,
                                                        HttpServletRequest request) {
         // 参数校验
@@ -236,6 +238,7 @@ public class AppController {
      * @return 部署 URL
      */
     @PostMapping("/deploy")
+    @Anonymous
     public BaseResponse<String> deployApp(@RequestBody @Valid AppDeployRequest appDeployRequest, HttpServletRequest request) {
 
         ThrowUtils.throwIf(appDeployRequest == null, ErrorCode.PARAMS_ERROR, "请求参数不能为空");

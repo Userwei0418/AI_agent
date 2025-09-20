@@ -114,6 +114,14 @@ declare namespace API {
     timestamp?: number
   }
 
+  type BaseResponsePageChatHistory = {
+    code?: number
+    data?: PageChatHistory
+    message?: string
+    description?: string
+    timestamp?: number
+  }
+
   type BaseResponsePageUserVO = {
     code?: number
     data?: PageUserVO
@@ -168,6 +176,30 @@ declare namespace API {
     message?: string
     description?: string
     timestamp?: number
+  }
+
+  type ChatHistory = {
+    id?: number
+    message?: string
+    messageType?: string
+    appId?: number
+    userId?: number
+    createTime?: string
+    updateTime?: string
+    isDelete?: number
+  }
+
+  type ChatHistoryQueryRequest = {
+    page?: number
+    pageSize?: number
+    sortField?: string
+    sortOrder?: string
+    id?: number
+    message?: string
+    messageType?: string
+    appId?: number
+    userId?: number
+    lastCreateTime?: string
   }
 
   type chatToGenCodeParams = {
@@ -225,6 +257,12 @@ declare namespace API {
     queryRequest: AppQueryRequest
   }
 
+  type listAppChatHistoryParams = {
+    appId: number
+    pageSize?: number
+    lastCreateTime?: string
+  }
+
   type markAsReadParams = {
     messageId: number
   }
@@ -252,6 +290,20 @@ declare namespace API {
     orders?: OrderItem[]
     optimizeCountSql?: PageAppVO
     searchCount?: PageAppVO
+    optimizeJoinOfCountSql?: boolean
+    maxLimit?: number
+    countId?: string
+    pages?: number
+  }
+
+  type PageChatHistory = {
+    records?: ChatHistory[]
+    total?: number
+    size?: number
+    current?: number
+    orders?: OrderItem[]
+    optimizeCountSql?: PageChatHistory
+    searchCount?: PageChatHistory
     optimizeJoinOfCountSql?: boolean
     maxLimit?: number
     countId?: string

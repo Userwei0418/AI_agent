@@ -156,6 +156,7 @@ export async function updatePassword(
   })
 }
 
+
 /** 此处后端没有提供注释 POST /user/uploadAvatar */
 export async function uploadAvatar(
   body: {},

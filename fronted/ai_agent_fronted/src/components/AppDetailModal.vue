@@ -9,7 +9,7 @@
         </div>
         <div class="info-item">
           <span class="info-label">创建时间：</span>
-          <span>{{ formatTime(app?.createTime) }}</span>
+          <span>{{ formattedCreateTime }}</span>
         </div>
         <div class="info-item">
           <span class="info-label">生成类型：</span>
@@ -52,8 +52,7 @@
 import { computed } from 'vue'
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 import UserInfo from './UserInfo.vue'
-import { formatTime } from '@/utils/time'
-import {formatCodeGenType} from "../utils/codeGenTypes.ts";
+import { formatCodeGenType } from '@/utils/codeGenTypes'
 
 interface Props {
   open: boolean
@@ -67,6 +66,30 @@ interface Emits {
   (e: 'delete'): void
 }
 
+// 添加时间解析函数
+const parseDateTimeArray = (dateArray: number[] | undefined): Date | null => {
+  if (!dateArray || dateArray.length < 6) {
+    return null
+  }
+  // 注意：JavaScript 中月份是从0开始的，所以需要减1
+  return new Date(
+    dateArray[0],     // 年
+    dateArray[1] - 1, // 月（需要减1）
+    dateArray[2],     // 日
+    dateArray[3],     // 时
+    dateArray[4],     // 分
+    dateArray[5]      // 秒
+  )
+}
+
+// 格式化时间显示的函数
+const formatDateTime = (date: Date | null): string => {
+  if (!date || isNaN(date.getTime())) {
+    return '未知时间'
+  }
+  return date.toLocaleString('zh-CN')
+}
+
 const props = withDefaults(defineProps<Props>(), {
   showActions: false,
 })
@@ -76,6 +99,22 @@ const emit = defineEmits<Emits>()
 const visible = computed({
   get: () => props.open,
   set: (value) => emit('update:open', value),
+})
+
+// 计算格式化后的创建时间
+const formattedCreateTime = computed(() => {
+  if (!props.app?.createTime) {
+    return '未知时间'
+  }
+
+  // 如果是数组格式的时间
+  if (Array.isArray(props.app.createTime)) {
+    const date = parseDateTimeArray(props.app.createTime as unknown as number[])
+    return formatDateTime(date)
+  }
+
+  // 如果是字符串格式的时间，直接返回
+  return props.app.createTime
 })
 
 const handleEdit = () => {
