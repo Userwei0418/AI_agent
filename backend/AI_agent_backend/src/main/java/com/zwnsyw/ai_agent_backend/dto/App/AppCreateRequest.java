@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import java.io.Serializable;
 
 import static com.zwnsyw.ai_agent_backend.enums.AiEnums.CodeGenTypeEnum.MULTI_FILE;
+import static com.zwnsyw.ai_agent_backend.enums.AiEnums.CodeGenTypeEnum.VUE_PROJECT;
 
 @Data
 public class AppCreateRequest implements Serializable {
@@ -20,7 +21,7 @@ public class AppCreateRequest implements Serializable {
      * 代码生成类型（枚举）
      * 默认为多文件模式
      */
-    private String codeGenType = MULTI_FILE.getValue();
+    private String codeGenType = VUE_PROJECT.getValue();
 
     private static final long serialVersionUID = 1L;
 }
